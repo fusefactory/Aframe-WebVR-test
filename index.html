@@ -5,6 +5,8 @@
     <title>Aframe test</title>
     <meta name="description" content="A-Frame test">
     <script src="../../dist/aframe-master.js"></script>
+    <!-- local rip of https://raw.githubusercontent.com/ngokevin/aframe-look-at-component/master/dist/aframe-look-at-component.min.js -->
+    <script src="lib/aframe-look-at-component.min.js"></script>
   </head>
   <body>
 
@@ -25,8 +27,15 @@
       </a-camera>
 
 
-      <a-circle color="#C00" radius="0.5" position="0 0 -10"></a-circle>
+      <!-- <a-circle color="#C00" radius="0.5" position="0 0 -10"></a-circle> -->
     </a-scene>
+
+    <!-- targets' lonlatdist are three-value attibutes where;
+          the first value specifies the longitude (rotation on y-axis)
+          the second value specifies the lattitude (rotation on x-axis)
+          the third value specifies distance from origin -->
+    <a-target lonlatdist="-20 0 10" />
+    <a-target lonlatdist="85 45 10" />
 
     <script src="app.js"></script>
   </body>
