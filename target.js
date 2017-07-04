@@ -1,6 +1,6 @@
 (function(scope){
 
-    console.log('register target component');
+    // console.log('register target component');
     AFRAME.registerComponent('target', {
         init: function(){
             // console.log('target init');

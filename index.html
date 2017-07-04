@@ -12,25 +12,31 @@
   <body>
 
     <a-scene>
+      <a-assets>
+        <a-mixin id="target"
+          material="color: #FF5555"
+          geometry="radius: 0.5">
+        </a-mixin>
+      </a-assets>
+
       <a-sky color="#DDDDDD" src="assets/cdc_casamood_04.jpg"></a-sky>
 
       <a-light type="directional" color="#FFF" intensity="0.5" position="-1 1 2"></a-light>
       <a-light type="ambient" color="#FFF"></a-light>
 
       <!-- camera; all child-entities of the camera are fixed to the camera perspective (like a HUD) -->
-      <a-camera position="0 0 0" cursor cursor-visible="true" cursor-scale="2" cursor-color="#0095DD" cursor-opacity="0.5">
+      <a-entity camera look-controls position="0 0 0" cursor cursor-visible="true" cursor-scale="2" cursor-color="#0095DD" cursor-opacity="0.5">
         <!-- crosshair / cursor -->
         <a-entity cursor="fuse: true; fuseTimeout: 500"
                   position="0 0 -1"
                   geometry="primitive: ring; radiusInner: 0.015; radiusOuter: 0.025"
                   material="color: #55FF55; shader: flat">
         </a-entity>
-      </a-camera>
+      </a-entity>
 
-
-      <!-- <a-circle color="#C00" radius="0.5" position="0 0 -10"></a-circle> -->
-      <a-circle target color="#FF5555" radius="0.5" look-at="[camera]" lonlatdist="-30 0 10"></a-circle>
-      <a-circle target color="#FF5555" radius="0.5" look-at="[camera]" lonlatdist="85 20 10"></a-circle>
+      <!-- targets -->
+      <a-circle target mixin="target" look-at="[camera]" lonlatdist="-30 0 10"></a-circle>
+      <a-circle target mixin="target" look-at="[camera]" lonlatdist="85 20 10"></a-circle>
     </a-scene>
 
     <script src="app.js"></script>
