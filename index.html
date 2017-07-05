@@ -27,13 +27,13 @@
       <a-light type="ambient" color="#FFF"></a-light>
 
       <!-- camera; all child-entities of the camera are fixed to the camera perspective (like a HUD) -->
-      <a-entity camera look-controls position="0 0 0" cursor cursor-visible="true" cursor-scale="2" cursor-color="#0095DD" cursor-opacity="0.5" raycaster="objects: .target">
+      <a-entity camera look-controls position="0 0 0" raycaster="objects: .target">
         <!-- crosshair / cursor -->
         <a-entity cursor="fuse: true; fuseTimeout: 500"
                   position="0 0 -1"
                   geometry="primitive: ring; radiusInner: 0.015; radiusOuter: 0.025"
                   material="color: #55FF55; shader: flat"
-                  raycaster="objects: .target; recursive: false">
+                  raycaster="objects: .target; recursive: false;">
         </a-entity>
       </a-entity>
 
