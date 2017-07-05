@@ -113,10 +113,7 @@
           position="0 0 0">
         </a-mixin>
 
-        <a-mixin id="popup" material="opacity: 0.0"           _getChildPopups: function(){
-                    // get by class?
-                    return this.el.querySelectorAll('a-image');
-                  }>
+        <a-mixin id="popup" material="opacity: 0.0">
         </a-mixin>
 
         <img id="popup-knights" src="assets/chess-knights.png">
@@ -139,39 +136,58 @@
         </a-entity>
       </a-entity>
 
-      <!-- targets -->
-      <a-entity lld lonlatdist="-30 0 10">
-        <a-entity target class="target" geometry="primitive: circle; radius: 0.5"  material="opacity:0;" transparent="true">
+      <!-- target entities -->
+      <!-- positioned using longitutde/latitude/distance coordinate -->
+      <!-- target component which receive raycaster events (and therefore need -invisible- geometry) -->
+      <a-entity lld lonlatdist="-30 0 10" look-at="[camera]"
+                target class="target" geometry="primitive: circle; radius: 0.5"  material="opacity:0;" transparent="true">
 
-          <a-entity mixin="poi" class="poi">
-            <a-animation begin="activate" attribute="geometry.thetaLength" from="360" to="0" dur="800" easing="linear"></a-animation>
-            <a-animation begin="activate" attribute="geometry.radius" from="0.5" to="0.2" delay="100" dur="700" easing="ease-in"></a-animation>
-            <a-animation begin="activate" attribute="material.color" from="#F55" to="#5F5" dur="1"></a-animation>
+        <!-- the targets visible "body" -->
+        <a-entity mixin="poi" class="poi">
+          <a-animation begin="activate" attribute="geometry.thetaLength" from="360" to="0" dur="800" easing="linear"></a-animation>
+          <a-animation begin="activate" attribute="geometry.radius" from="0.5" to="0.2" delay="100" dur="700" easing="ease-in"></a-animation>
+          <a-animation begin="activate" attribute="material.color" from="#F55" to="#5F5" dur="1"></a-animation>
 
-            <a-animation begin="deactivate" attribute="geometry.thetaLength" from="0" to="360" dur="100" delay="200" easing="linear"></a-animation>
-            <a-animation begin="deactivate" attribute="geometry.radius" from="0.2" to="0.5"  dur="400" delay="200" easing="ease-in"></a-animation>
-            <a-animation begin="deactivate" attribute="material.color" from="#5F5" to="#F55" dur="1"></a-animation>
+          <a-animation begin="deactivate" attribute="geometry.thetaLength" from="0" to="360" dur="100" delay="200" easing="linear"></a-animation>
+          <a-animation begin="deactivate" attribute="geometry.radius" from="0.2" to="0.5"  dur="400" delay="200" easing="ease-in"></a-animation>
+          <a-animation begin="deactivate" attribute="material.color" from="#5F5" to="#F55" dur="1"></a-animation>
 
-            <!-- <a-animation begin="activate" attribute="geometry.thetaStart" from="360" to="0" dur="800" easing="linear"></a-animation> -->
-          </a-entity>
-
-          <a-image mixin="popup" position="0 0 0.1" width="6" height="3" src="#popup-knights">
-              <a-animation begin="activate" attribute="opacity" to="1" dur="1000" delay="700"></a-animation>
-              <a-animation begin="activate" attribute="position" from="-3 0 0.1" to="0 0 2" delay="700" dur="800" easing="ease-out-cubic"></a-animation>
-              <a-animation begin="deactivate" attribute="opacity" from="1" to="0" dur="500"></a-animation>
-              <a-animation begin="deactivate" attribute="position" from="0 0 2" to="2 0 0.1" dur="350" easing="ease-in-cubic"></a-animation>
-          </a-image>
+          <!-- <a-animation begin="activate" attribute="geometry.thetaStart" from="360" to="0" dur="800" easing="linear"></a-animation> -->
         </a-entity>
+
+        <!-- the popup that shows when the target activates -->
+        <a-image mixin="popup" position="0 0 0.1" width="6" height="3" src="#popup-knights">
+            <a-animation begin="activate" attribute="opacity" to="1" dur="1000" delay="700"></a-animation>
+            <a-animation begin="activate" attribute="position" from="-3 0 0.1" to="0 0 2" delay="700" dur="800" easing="ease-out-cubic"></a-animation>
+            <a-animation begin="deactivate" attribute="opacity" from="1" to="0" dur="500"></a-animation>
+            <a-animation begin="deactivate" attribute="position" from="0 0 2" to="2 0 0.1" dur="350" easing="ease-in-cubic"></a-animation>
+        </a-image>
       </a-entity>
 
-      <a-circle lld target class="target" mixin="poi" look-at="[camera]" lonlatdist="85 20 10">
+      <a-entity lld lonlatdist="85 20 10" look-at="[camera]"
+                target class="target" geometry="primitive: circle; radius: 0.5"  material="opacity:0;" transparent="true">
+
+        <!-- the targets visible "body" -->
+        <a-entity mixin="poi" class="poi">
+          <a-animation begin="activate" attribute="geometry.thetaLength" from="360" to="0" dur="800" easing="linear"></a-animation>
+          <a-animation begin="activate" attribute="geometry.radius" from="0.5" to="0.2" delay="100" dur="700" easing="ease-in"></a-animation>
+          <a-animation begin="activate" attribute="material.color" from="#F55" to="#5F5" dur="1"></a-animation>
+
+          <a-animation begin="deactivate" attribute="geometry.thetaLength" from="0" to="360" dur="100" delay="200" easing="linear"></a-animation>
+          <a-animation begin="deactivate" attribute="geometry.radius" from="0.2" to="0.5"  dur="400" delay="200" easing="ease-in"></a-animation>
+          <a-animation begin="deactivate" attribute="material.color" from="#5F5" to="#F55" dur="1"></a-animation>
+
+          <!-- <a-animation begin="activate" attribute="geometry.thetaStart" from="360" to="0" dur="800" easing="linear"></a-animation> -->
+        </a-entity>
+
+        <!-- the popup that shows when the target activates -->
         <a-image mixin="popup" position="0 0 0.1" width="6" height="3" src="#popup-kings">
-          <a-animation begin="activate" attribute="opacity" to="1" dur="1000"></a-animation>
-          <a-animation begin="activate" attribute="position" from="-3 0 0.1" to="0 0 2" dur="800" easing="ease-out-cubic"></a-animation>
-          <a-animation begin="deactivate" attribute="opacity" from="1" to="0" dur="500"></a-animation>
-          <a-animation begin="deactivate" attribute="position" from="0 0 2" to="2 0 0.1" dur="350" easing="ease-in-cubic"></a-animation>
+            <a-animation begin="activate" attribute="opacity" to="1" dur="1000" delay="700"></a-animation>
+            <a-animation begin="activate" attribute="position" from="-3 0 0.1" to="0 0 2" delay="700" dur="800" easing="ease-out-cubic"></a-animation>
+            <a-animation begin="deactivate" attribute="opacity" from="1" to="0" dur="500"></a-animation>
+            <a-animation begin="deactivate" attribute="position" from="0 0 2" to="2 0 0.1" dur="350" easing="ease-in-cubic"></a-animation>
         </a-image>
-      </a-circle>
+      </a-entity>
     </a-scene>
   </body>
 </html>
