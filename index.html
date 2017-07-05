@@ -17,7 +17,7 @@
           material="color: #FF5555"
           geometry="radius: 0.5"></a-mixin>
         <a-mixin id="popup"
-          material="opacity: 0"></a-mixin>
+          visible="false"></a-mixin>
         <img id="popup1" src="assets/UI_Argilla_dark.png">
       </a-assets>
 
@@ -33,7 +33,7 @@
                   position="0 0 -1"
                   geometry="primitive: ring; radiusInner: 0.015; radiusOuter: 0.025"
                   material="color: #55FF55; shader: flat"
-                  raycaster="objects: .target">
+                  raycaster="objects: .target; recursive: false">
         </a-entity>
       </a-entity>
 
@@ -54,20 +54,39 @@
 
       // console.log('register target component');
       AFRAME.registerComponent('target', {
+          schema: {
+            active: {type: 'boolean', default: false}
+          },
+
           init: function(){
               // console.log('target init');
               this._convertLlrToPos();
+              var self = this;
 
               this.el.addEventListener('raycaster-intersected', function (evt) {
-                // console.log('raycaster-intersected ', evt);
-                // May get two intersection events per tick; same element, different faces.
-                //console.log('raycaster-intersected ' + el.outerHTML);
-                evt.target.setAttribute('material', 'color', '#5f5');
+                self.el.setAttribute('target', 'active', true);
               });
 
               this.el.addEventListener('raycaster-intersected-cleared', function (evt) {
-                evt.target.setAttribute('material', 'color', '#f55');
+                self.el.setAttribute('target', 'active', false);
               });
+          },
+
+          update: function(prevData){
+            if(this.data.active != prevData.active){
+              var activeValue = this.data.active;
+              this.el.setAttribute('material', 'color', activeValue ? '#5f5' : '#f55');
+
+              // show hide popups bases on active flag
+              Array.prototype.forEach.call(this._getChildTargets(), function (targetEl) {
+                targetEl.setAttribute('visible', activeValue);
+              });
+            }
+          },
+
+          _getChildTargets: function(){
+            // get by class?
+            return this.el.querySelectorAll('a-image');
           },
 
           _convertLlrToPos: function(){
