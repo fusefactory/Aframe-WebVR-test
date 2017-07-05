@@ -11,13 +11,114 @@
   </head>
   <body>
 
+    <script>
+      // console.log("target.js");
+
+      // console.log('register target component');
+      AFRAME.registerComponent('lld', {
+        init: function(){
+          // console.log('target init');
+          this._convertLlrToPos();
+        },
+
+        _convertLlrToPos: function(){
+            // console.log("target._convertLlrToPos");
+            // get longitude/lattitude/distance attribute
+            var coords = this.el.getAttribute('lonlatdist');
+            //console.log('attr: ', coords);
+
+            // convert to position attribute
+            var coords = AFRAME.utils.coordinates.parse(coords);
+            var factor = Math.PI / 180.0; // degrees-to-radians
+            // console.log('Create target: ', coordinates.x * factor, coordinates.y * factor, coordinates.z);
+            var coords = AFRAME.utils.coordinates.stringify(this._llrToWorld(coords.x * factor, coords.y * factor, coords.z));
+            // console.log('pos: ', coords);
+
+            // update our element
+            this.el.setAttribute('position', coords);
+        },
+
+        /// calculates vec3 (x,y,z) position based on longitude, lattitude and distance values
+        _llrToWorld: function(longit, latit, rad){
+          // default (0,0) position, is straight in front (negative Z)
+          var vec3 = new THREE.Vector3(0, 0, -rad);
+          // longit should provide a radian value for clockwise rotation around the y-axis
+          vec3.applyAxisAngle(new THREE.Vector3(0,-1,0), longit);
+          // latit should provide a radian value for rotation around the x-axis (0 = no rotation, 1/2PI = straight up)
+          vec3.applyAxisAngle(new THREE.Vector3(1,0,0), latit);
+          return {x: vec3.x, y: vec3.y, z: vec3.z};
+        }
+      });
+
+      AFRAME.registerComponent('target', {
+          schema: {
+            active: {type: 'boolean', default: false}
+          },
+
+          init: function(){
+              var self = this;
+
+              this.el.addEventListener('raycaster-intersected', function (evt) {
+                // console.log(evt);
+                if(evt.target == self.el) // can also be a child element
+                  self.el.setAttribute('target', 'active', true);
+              });
+
+              this.el.addEventListener('raycaster-intersected-cleared', function (evt) {
+                if(evt.target == self.el)
+                  self.el.setAttribute('target', 'active', false);
+              });
+          },
+
+          update: function(prevData){
+            if(this.data.active != prevData.active){
+              var activeValue = this.data.active;
+
+              this.el.emit(activeValue ? 'activate' : 'deactivate');
+
+              // trigger activate/deactivate events on all child POIs and popups
+              Array.prototype.forEach.call(this.el.children, function (targetEl) {
+              // Array.prototype.forEach.call(this._getChildPois(), function (targetEl) {
+                // targetEl.setAttribute('opacity', activeValue ? 1.0 : 0.0);
+                targetEl.emit(activeValue ? 'activate' : 'deactivate');
+                // targetEl.setAttribute('material', 'color', activeValue ? '#5f5' : '#f55');
+              });
+
+              // Array.prototype.forEach.call(this._getChildPopups(), function (targetEl) {
+              //   // targetEl.setAttribute('opacity', activeValue ? 1.0 : 0.0);
+              //   targetEl.emit(activeValue ? 'activate' : 'deactivate');
+              // });
+            }
+          },
+
+          _getChildPois: function(){
+            // get by class?
+            return this.el.querySelectorAll('.poi');
+          },
+
+          _getChildPopups: function(){
+            // get by class?
+            return this.el.querySelectorAll('a-image');
+          }
+      });
+
+    </script>
+
+
     <a-scene>
       <a-assets>
-        <a-mixin id="target"
+        <a-mixin id="poi"
           material="color: #FF5555"
-          geometry="radius: 0.5"></a-mixin>
-        <a-mixin id="popup" material="opacity: 0.0">
+          geometry="primitive: circle; radius: 0.5"
+          position="0 0 0">
         </a-mixin>
+
+        <a-mixin id="popup" material="opacity: 0.0"           _getChildPopups: function(){
+                    // get by class?
+                    return this.el.querySelectorAll('a-image');
+                  }>
+        </a-mixin>
+
         <img id="popup-knights" src="assets/chess-knights.png">
         <img id="popup-kings" src="assets/chess-kings.png">
       </a-assets>
@@ -39,16 +140,31 @@
       </a-entity>
 
       <!-- targets -->
-      <a-circle target class="target" mixin="target" look-at="[camera]" lonlatdist="-20 0 10">
-        <a-image mixin="popup" position="0 0 0.1" width="6" height="3" src="#popup-knights">
-            <a-animation begin="activate" attribute="opacity" to="1" dur="1000"></a-animation>
-            <a-animation begin="activate" attribute="position" from="-3 0 0.1" to="0 0 2" dur="800" easing="ease-out-cubic"></a-animation>
-            <a-animation begin="deactivate" attribute="opacity" from="1" to="0" dur="500"></a-animation>
-            <a-animation begin="deactivate" attribute="position" from="0 0 2" to="2 0 0.1" dur="350" easing="ease-in-cubic"></a-animation>
-        </a-image>
-      </a-circle>
+      <a-entity lld lonlatdist="-30 0 10">
+        <a-entity target class="target" geometry="primitive: circle; radius: 0.5"  material="opacity:0;" transparent="true">
 
-      <a-circle target class="target" mixin="target" look-at="[camera]" lonlatdist="85 20 10">
+          <a-entity mixin="poi" class="poi">
+            <a-animation begin="activate" attribute="geometry.thetaLength" from="360" to="0" dur="800" easing="linear"></a-animation>
+            <a-animation begin="activate" attribute="geometry.radius" from="0.5" to="0.2" delay="100" dur="700" easing="ease-in"></a-animation>
+            <a-animation begin="activate" attribute="material.color" from="#F55" to="#5F5" dur="1"></a-animation>
+
+            <a-animation begin="deactivate" attribute="geometry.thetaLength" from="0" to="360" dur="100" delay="200" easing="linear"></a-animation>
+            <a-animation begin="deactivate" attribute="geometry.radius" from="0.2" to="0.5"  dur="400" delay="200" easing="ease-in"></a-animation>
+            <a-animation begin="deactivate" attribute="material.color" from="#5F5" to="#F55" dur="1"></a-animation>
+
+            <!-- <a-animation begin="activate" attribute="geometry.thetaStart" from="360" to="0" dur="800" easing="linear"></a-animation> -->
+          </a-entity>
+
+          <a-image mixin="popup" position="0 0 0.1" width="6" height="3" src="#popup-knights">
+              <a-animation begin="activate" attribute="opacity" to="1" dur="1000" delay="700"></a-animation>
+              <a-animation begin="activate" attribute="position" from="-3 0 0.1" to="0 0 2" delay="700" dur="800" easing="ease-out-cubic"></a-animation>
+              <a-animation begin="deactivate" attribute="opacity" from="1" to="0" dur="500"></a-animation>
+              <a-animation begin="deactivate" attribute="position" from="0 0 2" to="2 0 0.1" dur="350" easing="ease-in-cubic"></a-animation>
+          </a-image>
+        </a-entity>
+      </a-entity>
+
+      <a-circle lld target class="target" mixin="poi" look-at="[camera]" lonlatdist="85 20 10">
         <a-image mixin="popup" position="0 0 0.1" width="6" height="3" src="#popup-kings">
           <a-animation begin="activate" attribute="opacity" to="1" dur="1000"></a-animation>
           <a-animation begin="activate" attribute="position" from="-3 0 0.1" to="0 0 2" dur="800" easing="ease-out-cubic"></a-animation>
@@ -57,80 +173,5 @@
         </a-image>
       </a-circle>
     </a-scene>
-
-    <script>
-      // console.log("target.js");
-
-      // console.log('register target component');
-      AFRAME.registerComponent('target', {
-          schema: {
-            active: {type: 'boolean', default: false}
-          },
-
-          init: function(){
-              // console.log('target init');
-              this._convertLlrToPos();
-              var self = this;
-
-              this.el.addEventListener('raycaster-intersected', function (evt) {
-                // console.log(evt);
-                if(evt.target == self.el) // can also be a child element
-                  self.el.setAttribute('target', 'active', true);
-              });
-
-              this.el.addEventListener('raycaster-intersected-cleared', function (evt) {
-                if(evt.target == self.el)
-                  self.el.setAttribute('target', 'active', false);
-              });
-          },
-
-          update: function(prevData){
-            if(this.data.active != prevData.active){
-              var activeValue = this.data.active;
-              this.el.setAttribute('material', 'color', activeValue ? '#5f5' : '#f55');
-
-              // trigger activate/deactivate events on all child popups
-              Array.prototype.forEach.call(this._getChildPopups(), function (targetEl) {
-                // targetEl.setAttribute('opacity', activeValue ? 1.0 : 0.0);
-                targetEl.emit(activeValue ? 'activate' : 'deactivate');
-              });
-            }
-          },
-
-          _getChildPopups: function(){
-            // get by class?
-            return this.el.querySelectorAll('a-image');
-          },
-
-          _convertLlrToPos: function(){
-              // console.log("target._convertLlrToPos");
-              // get longitude/lattitude/distance attribute
-              var coords = this.el.getAttribute('lonlatdist');
-              // console.log('attr: ', coords);
-
-              // convert to position attribute
-              var coords = AFRAME.utils.coordinates.parse(coords);
-              var factor = Math.PI / 180.0; // degrees-to-radians
-              // console.log('Create target: ', coordinates.x * factor, coordinates.y * factor, coordinates.z);
-              var coords = AFRAME.utils.coordinates.stringify(this._llrToWorld(coords.x * factor, coords.y * factor, coords.z));
-              // console.log('pos: ', coords);
-
-              // update our element
-              this.el.setAttribute('position', coords);
-          },
-
-          /// calculates vec3 (x,y,z) position based on longitude, lattitude and distance values
-          _llrToWorld: function(longit, latit, rad){
-            // default (0,0) position, is straight in front (negative Z)
-            var vec3 = new THREE.Vector3(0, 0, -rad);
-            // longit should provide a radian value for clockwise rotation around the y-axis
-            vec3.applyAxisAngle(new THREE.Vector3(0,-1,0), longit);
-            // latit should provide a radian value for rotation around the x-axis (0 = no rotation, 1/2PI = straight up)
-            vec3.applyAxisAngle(new THREE.Vector3(1,0,0), latit);
-            return {x: vec3.x, y: vec3.y, z: vec3.z};
-          }
-      });
-
-    </script>
   </body>
 </html>
