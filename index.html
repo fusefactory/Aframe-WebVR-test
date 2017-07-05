@@ -16,8 +16,8 @@
         <a-mixin id="target"
           material="color: #FF5555"
           geometry="radius: 0.5"></a-mixin>
-        <a-mixin id="popup"
-          visible="false"></a-mixin>
+        <a-mixin id="popup" material="opacity: 0.0">
+        </a-mixin>
         <img id="popup1" src="assets/UI_Argilla_dark.png">
       </a-assets>
 
@@ -39,14 +39,22 @@
 
       <!-- targets -->
       <a-circle target class="target" mixin="target" look-at="[camera]" lonlatdist="-20 0 10">
-        <a-image mixin="popup" position="0 0 1" width="5" height="4.5" src="#popup1"></a-image>
+        <a-image mixin="popup" position="0 0 0.1" width="5" height="4.5" src="#popup1">
+            <a-animation begin="activate" attribute="opacity" to="1" dur="1000"></a-animation>
+            <a-animation begin="activate" attribute="position" from="-3 0 0.1" to="0 0 2" dur="800" easing="ease-out-cubic"></a-animation>
+            <a-animation begin="deactivate" attribute="opacity" from="1" to="0" dur="500"></a-animation>
+            <a-animation begin="deactivate" attribute="position" from="0 0 2" to="2 0 0.1" dur="350" easing="ease-in-cubic"></a-animation>
+        </a-image>
       </a-circle>
 
       <a-circle target class="target" mixin="target" look-at="[camera]" lonlatdist="85 20 10">
-        <a-image mixin="popup" position="0 0 1" width="5" height="4.5" src="#popup1"></a-image>
+        <a-image mixin="popup" position="0 0 1" width="5" height="4.5" src="#popup1">
+          <a-animation begin="activate" attribute="opacity" to="1" dur="1000"></a-animation>
+          <a-animation begin="activate" attribute="position" from="-3 0 0.1" to="0 0 2" dur="800" easing="ease-out-cubic"></a-animation>
+          <a-animation begin="deactivate" attribute="opacity" from="1" to="0" dur="500"></a-animation>
+          <a-animation begin="deactivate" attribute="position" from="0 0 2" to="2 0 0.1" dur="350" easing="ease-in-cubic"></a-animation>
+        </a-image>
       </a-circle>
-
-      <a-box position="3 0 -10" width="1" height="1" depth="1"></a-box>
     </a-scene>
 
     <script>
@@ -64,11 +72,14 @@
               var self = this;
 
               this.el.addEventListener('raycaster-intersected', function (evt) {
-                self.el.setAttribute('target', 'active', true);
+                // console.log(evt);
+                if(evt.target == self.el) // can also be a child element
+                  self.el.setAttribute('target', 'active', true);
               });
 
               this.el.addEventListener('raycaster-intersected-cleared', function (evt) {
-                self.el.setAttribute('target', 'active', false);
+                if(evt.target == self.el)
+                  self.el.setAttribute('target', 'active', false);
               });
           },
 
@@ -77,14 +88,15 @@
               var activeValue = this.data.active;
               this.el.setAttribute('material', 'color', activeValue ? '#5f5' : '#f55');
 
-              // show hide popups bases on active flag
-              Array.prototype.forEach.call(this._getChildTargets(), function (targetEl) {
-                targetEl.setAttribute('visible', activeValue);
+              // trigger activate/deactivate events on all child popups
+              Array.prototype.forEach.call(this._getChildPopups(), function (targetEl) {
+                // targetEl.setAttribute('opacity', activeValue ? 1.0 : 0.0);
+                targetEl.emit(activeValue ? 'activate' : 'deactivate');
               });
             }
           },
 
-          _getChildTargets: function(){
+          _getChildPopups: function(){
             // get by class?
             return this.el.querySelectorAll('a-image');
           },
