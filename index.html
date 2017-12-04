@@ -7,6 +7,8 @@
     <script src="lib/aframe-master.min.js"></script>
     <!-- local rip of https://raw.githubusercontent.com/ngokevin/aframe-look-at-component/master/dist/aframe-look-at-component.min.js -->
     <script src="lib/aframe-look-at-component.min.js"></script>
+    <script src="lib/aframe-stereo-component.min.js"></script>
+
     <!-- <script src="lib/target.js"></script> -->
   </head>
   <body>
@@ -108,9 +110,16 @@
           // },
 
           init: function(){
+            if(!window.rooms){
+              window.rooms = [];
+              window.rooms.push(this);
+            }
+
             this.images = [
-              "assets/chess-world.jpg",
-              "assets/chess-world-colored.jpg",
+              "assets/equirectangulars/test_fuse_360_stereo.jpg"
+              , "assets/equirectangulars/test_fuse_360.jpg"
+              // , "assets/chess-world.jpg"
+              //, "assets/equirectangulars/chess-world-colored.jpg"
             ];
             this.curImageIdx = 0;
             this._update();
@@ -149,15 +158,30 @@
 
         <img id="popup-knights" src="assets/chess-knights.png">
         <img id="popup-kings" src="assets/chess-kings.png">
+
+        <img id="room1-top" src="assets/equirectangulars/stereo-top.jpg" />
+        <img id="room1-bottom" src="assets/equirectangulars/stereo-bottom.jpg" />
+
+
       </a-assets>
 
-      <a-sky room color="#DDDDDD"></a-sky>
+
+      <!-- native sphere, will render on 'right' eye, and will take only the second half (bottom) of the video for projection -->
+      <!-- <a-entity geometry="primitive: sphere; radius: 100; segmentsWidth: 64; segmentsHeight: 64;"
+          material="shader: flat; src: #equi1;"
+          scale="-1 1 1"
+          stereo="eye:left; split: vertical;">
+      </a-entity> -->
+
+      <!-- <a-sky room color="#DDDDDD"></a-sky> -->
+      <a-sky id="sky1" src="#room1-top" stereo="eye:left"></a-sky>
+      <a-sky id="sky2" src="#room1-bottom" stereo="eye:right"></a-sky>
 
       <a-light type="directional" color="#FFF" intensity="0.5" position="-1 1 2"></a-light>
       <a-light type="ambient" color="#FFF"></a-light>
 
       <!-- camera; all child-entities of the camera are fixed to the camera perspective (like a HUD) -->
-      <a-entity camera look-controls position="0 0 0" raycaster="objects: .target">
+      <a-entity camera look-controls position="0 0 0" raycaster="objects: .target" stereocam="eye:left;">
         <!-- crosshair / cursor -->
         <a-entity cursor="fuse: true; fuseTimeout: 500"
                   position="0 0 -1"
