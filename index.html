@@ -7,9 +7,33 @@
     <script src="lib/aframe-master.min.js"></script>
     <!-- local rip of https://raw.githubusercontent.com/ngokevin/aframe-look-at-component/master/dist/aframe-look-at-component.min.js -->
     <script src="lib/aframe-look-at-component.min.js"></script>
+    <script src="js/LayerMesh.js"></script>
     <!-- <script src="lib/target.js"></script> -->
   </head>
   <body>
+
+    <script type="x-shader/x-vertex" id="vertexShaderSource">
+      varying vec2 vUv;
+
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+      }
+    </script>
+
+    <script type="x-shader/x-fragment" id="fragmentShaderSource">
+        varying vec2 vUv;
+        uniform vec3 color;
+        uniform sampler2D texColor;
+        uniform sampler2D texMask;
+        uniform float maskOffsetX;
+
+        void main() {
+          vec4 clr = texture2D( texColor, vUv );
+          vec4 alpha = texture2D( texMask, vUv+vec2(maskOffsetX,0.0) );
+          gl_FragColor = vec4(color * clr.rgb, alpha.r);
+        }
+    </script>
 
     <script>
       // console.log("target.js");
@@ -108,11 +132,40 @@
           // },
 
           init: function(){
-            this.images = [
-              "assets/chess-world.jpg",
-              "assets/chess-world-colored.jpg",
+            this.roomData = [
+              {
+                base: 'assets/equirectangulars/cdc_casamood_04.jpg',
+                layers: []
+              },
+              {
+                base: 'assets/equirectangulars/cdc_casamood_04.jpg',
+                layers: [
+                  { 'tex': 'assets/equirectangulars/cdc_casamood_09.jpg',
+                    'mask': 'assets/equirectangulars/cdc_casamood_06_mask1.jpg'
+                  },
+                  { 'tex': 'assets/equirectangulars/cdc_casamood_08.jpg',
+                    'mask': 'assets/equirectangulars/cdc_casamood_06_mask2.jpg'
+                  }
+                ]
+              },
+              {
+                base: 'assets/equirectangulars/cdc_casamood_06.jpg',
+                layers: []
+              },
+              {
+                base: 'assets/equirectangulars/cdc_casamood_06.jpg',
+                layers: [
+                  { 'tex': 'assets/equirectangulars/cdc_casamood_10.jpg',
+                    'mask': 'assets/equirectangulars/cdc_casamood_06_mask1.jpg'
+                  },
+                  { 'tex': 'assets/equirectangulars/cdc_casamood_11.jpg',
+                    'mask': 'assets/equirectangulars/cdc_casamood_06_mask2.jpg'
+                  }
+                ]
+              }
             ];
-            this.curImageIdx = 0;
+
+            this.roomIdx = 0;
             this._update();
 
             window.addEventListener('keydown', this.onKeyDown.bind(this));
@@ -120,13 +173,75 @@
 
           onKeyDown: function(e) {
             if (e.key == '/') {
-              this.curImageIdx = (this.curImageIdx == 0 ? 1 : 0);
+              this.roomIdx = (this.roomIdx == 0 ? 1 : 0);
               this._update();
             }
           },
 
           _update: function(){
-            this.el.setAttribute('src', this.images[this.curImageIdx]);
+            // this.el.setAttribute('src', 'assets/equirectangulars/cdc_casamood_06_mask1.jpg');
+
+            // // base material; simple static texture
+            // var mat0 = new THREE.MeshBasicMaterial({
+            //   map: 'assets/equirectangulars/cdc_casamood_06_mask1.jpg'//this.images[this.curImageIdx]
+            // });
+
+            // var mat0 = this._createLayerMaterial(this.images[this.curImageIdx].tex, this.images[this.curImageIdx].mask);
+            // console.log('mat: ', mat0);
+            // // console.log('mesh: ',this.el.getOrCreateObject3D('mesh'));
+            // this.material = mat0; //this.el.getOrCreateObject3D('mesh').material = mat0;
+            // //this.el.getOrCreateObject3D('mesh').material = mat0;
+            // this.el.object3DMap.mesh.material = mat0;
+            // //console.log('elel: ', this.el);
+            window.ell = this.el;
+
+
+            var self=this;
+            var lmesh = self.createLayerMesh(self.roomData[self.roomIdx]);
+            this.el.setObject3D('mesh', lmesh.mesh);
+          },
+
+          createLayerMesh: function(data) {
+            console.log('createLayerMesh: ', data);
+            var layersData = [];
+            data.layers.forEach(function(info, idx, ar){
+                var layer = {'tex': new THREE.TextureLoader().load(info.tex)};
+                if(info.mask) layer.mask = new THREE.TextureLoader().load(info.mask);
+                layersData.push(layer);
+            });
+
+            var lmesh = new LayerMesh(
+              new THREE.TextureLoader().load( data.base ),
+              layersData);
+
+            console.log('createLayerMesh created: ', lmesh);
+
+            return lmesh;
+          },
+
+          _createLayerMaterial: function(colorTexture, maskTexture, color){
+            if(!color){
+              color = new THREE.Color(1,1,1);
+            }
+
+            var uniforms = {
+              color: { value: color },
+              maskOffsetX: {value: 0.0},
+              texColor: {value: colorTexture},
+              texMask: {value: maskTexture}
+            };
+
+            uniforms.texColor.value.wrapS = uniforms.texColor.value.wrapT = THREE.RepeatWrapping;
+            uniforms.texMask.value.wrapS = uniforms.texMask.value.wrapT = THREE.RepeatWrapping;
+
+            var material = new THREE.ShaderMaterial( {
+              uniforms: uniforms,
+              vertexShader:document.getElementById( 'vertexShaderSource' ).textContent,
+              fragmentShader: document.getElementById( 'fragmentShaderSource' ).textContent,
+              transparent: true
+            });
+
+            return material;
           }
       });
 
@@ -151,7 +266,8 @@
         <img id="popup-kings" src="assets/chess-kings.png">
       </a-assets>
 
-      <a-sky room color="#DDDDDD"></a-sky>
+      <a-sky color="#DDDDDD" material="color:pink"></a-sky>
+      <a-entity room />
 
       <a-light type="directional" color="#FFF" intensity="0.5" position="-1 1 2"></a-light>
       <a-light type="ambient" color="#FFF"></a-light>
